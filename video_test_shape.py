@@ -3,7 +3,7 @@ import dlib
 import numpy as np
 from imutils import face_utils
 
-face_landmark_path = './shape_predictor_68_face_landmarks.dat'
+face_landmark_path = 'shape_predictor_68_face_landmarks.dat'
 
 K = [6.5308391993466671e+002, 0.0, 3.1950000000000000e+002,
      0.0, 6.5308391993466671e+002, 2.3950000000000000e+002,
@@ -57,9 +57,9 @@ def get_head_pose(shape):
     # calc euler angle
     rotation_mat, _ = cv2.Rodrigues(rotation_vec)
     pose_mat = cv2.hconcat((rotation_mat, translation_vec))
-    _, _, _, _, _, _, euler_angle = cv2.decomposeProjectionMatrix(pose_mat)
+    _, _, _, trans_Vect, _, _, euler_angle = cv2.decomposeProjectionMatrix(pose_mat)
 
-    return reprojectdst, euler_angle
+    return reprojectdst, euler_angle, trans_Vect
 
 
 def main():
@@ -80,21 +80,34 @@ def main():
                 shape = predictor(frame, face_rects[0])
                 shape = face_utils.shape_to_np(shape)
 
-                reprojectdst, euler_angle = get_head_pose(shape)
+                reprojectdst, euler_angle, trans_Vect = get_head_pose(shape)
+                
+                for i, (x, y) in enumerate(shape):
+                    if i in { 17, 19, 21, 22, 24, 26, 37, 38, 40, 41, 43, 44, 46, 47, 48, 51, 54, 57, 62, 66}:
+                        cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)
+                        #(x,y) outputed files
+                    else:
+                        cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
 
-                for (x, y) in shape:
-                    cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
-
+                """
                 for start, end in line_pairs:
                     cv2.line(frame, reprojectdst[start], reprojectdst[end], (0, 0, 255))
-
+                """
+                cv2.putText(frame, "X: " + trans_Vect[0], (20, 20), cv2.FONT_HERSHEY_SIMPLEX,
+                            0.75, (255, 255, 255), thickness=2)
+                cv2.putText(frame, "Y: " + trans_Vect[1], (20, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                            0.75, (255, 255, 255), thickness=2)
+                cv2.putText(frame, "Z: " + trans_Vect[2], (20, 80), cv2.FONT_HERSHEY_SIMPLEX,
+                            0.75, (255, 255, 255), thickness=2)
+                """
+                #====================euler_angle[0, 0] -> euler_angle[2, 0] outputed files ====================#
                 cv2.putText(frame, "X: " + "{:7.2f}".format(euler_angle[0, 0]), (20, 20), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (0, 0, 0), thickness=2)
+                            0.75, (255, 255, 255), thickness=2)
                 cv2.putText(frame, "Y: " + "{:7.2f}".format(euler_angle[1, 0]), (20, 50), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (0, 0, 0), thickness=2)
+                            0.75, (255, 255, 255), thickness=2)
                 cv2.putText(frame, "Z: " + "{:7.2f}".format(euler_angle[2, 0]), (20, 80), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (0, 0, 0), thickness=2)
-
+                            0.75, (255, 255, 255), thickness=2)
+                """
             cv2.imshow("demo", frame)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
