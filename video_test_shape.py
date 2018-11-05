@@ -3,6 +3,8 @@ import dlib
 import numpy as np
 from imutils import face_utils
 
+import pandas as pd
+
 face_landmark_path = 'shape_predictor_68_face_landmarks.dat'
 
 K = [6.5308391993466671e+002, 0.0, 3.1950000000000000e+002,
@@ -83,22 +85,26 @@ def main():
                 reprojectdst, euler_angle, trans_Vec = get_head_pose(shape)
                 
                 for i, (x, y) in enumerate(shape):
-                    if i in { 17, 19, 21, 22, 24, 26, 37, 38, 40, 41, 43, 44, 46, 47, 48, 51, 54, 57, 62, 66}:
+                    if i in { 17, 19, 21, 22, 24, 26, 48, 51, 54, 57, 62, 66}:
                         cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)
                         #(x,y) outputed files
+
+                    elif i in {39, 42, 27, 33}: #kizyun ziku
+                        cv2.circle(frame, (x, y), 1, (255, 0, 0), -1)
+
                     else:
                         cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
 
-                print(trans_Vec)
+                print(trans_Vec[0] / 1000)
                 
                 for start, end in line_pairs:
                     cv2.line(frame, reprojectdst[start], reprojectdst[end], (0, 0, 255))
                 """
-                cv2.putText(frame, "X: " + trans_Vec[0].astype(object), (20, 20), cv2.FONT_HERSHEY_SIMPLEX,
+                cv2.putText(frame, trans_Vec[0], (20, 20), cv2.FONT_HERSHEY_SIMPLEX,
                             0.75, (255, 255, 255), thickness=2)
-                cv2.putText(frame, "Y: " + trans_Vec[1].astype(object), (20, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                cv2.putText(frame, trans_Vec[1], (20, 50), cv2.FONT_HERSHEY_SIMPLEX,
                             0.75, (255, 255, 255), thickness=2)
-                cv2.putText(frame, "Z: " + trans_Vec[2].astype(object), (20, 80), cv2.FONT_HERSHEY_SIMPLEX,
+                cv2.putText(frame, trans_Vec[2], (20, 80), cv2.FONT_HERSHEY_SIMPLEX,
                             0.75, (255, 255, 255), thickness=2)
                 """
                 #====================euler_angle[0, 0] -> euler_angle[2, 0] outputed files ====================#
