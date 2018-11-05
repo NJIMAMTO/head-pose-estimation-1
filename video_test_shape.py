@@ -59,10 +59,18 @@ def get_head_pose(shape):
     # calc euler angle
     rotation_mat, _ = cv2.Rodrigues(rotation_vec)
     pose_mat = cv2.hconcat((rotation_mat, translation_vec))
+    print(pose_mat)
     cameraMatrix, rotMatrix, TRANS_VEC, rotMatrixX, rotMatrixY, rotMatrixZ, EULER_ANGLE = cv2.decomposeProjectionMatrix(pose_mat)
 
     return reprojectdst, EULER_ANGLE, translation_vec
 
+#====================#Homography Transformation of face#====================#
+
+def HT_head_pose(shape):
+    homography_mat = cv2.getPerspectiveTransform("object_ptsから両目頭と鼻の上下端の座標を抽出した4点の座標","shapeから両目頭と鼻の上下端の座標を抽出した4点の座標")
+    dst = cv2.warpAffine(shape,homography_mat,(cols,rows))
+
+#====================#               end               #====================#
 
 def main():
     # return
@@ -75,6 +83,7 @@ def main():
 
     while cap.isOpened():
         ret, frame = cap.read()
+
         if ret:
             face_rects = detector(frame, 0)
 
@@ -116,7 +125,6 @@ def main():
                             0.75, (255, 255, 255), thickness=2)
                 
             cv2.imshow("demo", frame)
-
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
