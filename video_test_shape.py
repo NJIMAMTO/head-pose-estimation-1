@@ -3,7 +3,7 @@ import dlib
 import numpy as np
 from imutils import face_utils
 
-import pandas as pd
+#import pandas as pd
 
 face_landmark_path = 'shape_predictor_68_face_landmarks.dat'
 
@@ -59,17 +59,25 @@ def get_head_pose(shape):
     # calc euler angle
     rotation_mat, _ = cv2.Rodrigues(rotation_vec)
     pose_mat = cv2.hconcat((rotation_mat, translation_vec))
-    print(pose_mat)
+    #print(pose_mat)
     cameraMatrix, rotMatrix, TRANS_VEC, rotMatrixX, rotMatrixY, rotMatrixZ, EULER_ANGLE = cv2.decomposeProjectionMatrix(pose_mat)
 
     return reprojectdst, EULER_ANGLE, translation_vec
 
 #====================#Homography Transformation of face#====================#
 
-def HT_head_pose(shape):
-    homography_mat = cv2.getPerspectiveTransform("object_ptsから両目頭と鼻の上下端の座標を抽出した4点の座標","shapeから両目頭と鼻の上下端の座標を抽出した4点の座標")
-    dst = cv2.warpAffine(shape,homography_mat,(cols,rows))
+def HT_head_pose(frame,shape):
+    rotation_vec = np.float32([[0,0,0]])
+    translation_vec = np.float32([[0,0,0]])
+    
+    reproject_obj_pts, _  = cv2.projectPoints(object_pts, rotation_vec, translation_vec, cam_matrix,dist_coeffs)
+    pts_obj = np.array((reproject_obj_pts[5],reproject_obj_pts[6],reproject_obj_pts[9],reproject_obj_pts[8]),np.float32)
+    pts_shape = np.array((shape[39],shape[42],shape[35],shape[31]),np.float32)
+    print(pts_obj)
+    #homography_mat = cv2.getPerspectiveTransform(pts_obj, pts_shape)
+    #print(homography_mat)
 
+    return 0
 #====================#               end               #====================#
 
 def main():
@@ -92,7 +100,8 @@ def main():
                 shape = face_utils.shape_to_np(shape)
 
                 reprojectdst, euler_angle, trans_Vec = get_head_pose(shape)
-                
+                HT_head_pose(frame,shape)
+
                 for i, (x, y) in enumerate(shape):
                     if i in { 17, 19, 21, 22, 24, 26, 48, 51, 54, 57, 62, 66}:
                         cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)
@@ -104,7 +113,7 @@ def main():
                     else:
                         cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
 
-                print(trans_Vec[0] / 1000)
+                #print(trans_Vec[0] / 1000)
                 
                 for start, end in line_pairs:
                     cv2.line(frame, reprojectdst[start], reprojectdst[end], (0, 0, 255))
