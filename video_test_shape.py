@@ -97,10 +97,7 @@ def HT_head_pose(frame,shape):
     cols = 1024
     img = np.zeros((rows, cols, 3), np.uint8)
     img[:,:,:] = [255,255,255]
-    """
-    for (x, y, z) in object_pts:
-        cv2.circle(img, (x.astype('int8') + 512, y.astype('int8') + 512), 2, (0, 0, 0), -1)
-    """
+
     for (x, y) in shape:
         point = np.array([[x],
                           [y],
