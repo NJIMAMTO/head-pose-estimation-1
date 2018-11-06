@@ -67,16 +67,48 @@ def get_head_pose(shape):
 #====================#Homography Transformation of face#====================#
 
 def HT_head_pose(frame,shape):
-    rotation_vec = np.float32([[0,0,0]])
-    translation_vec = np.float32([[0,0,0]])
+    rotation_vec = np.float32([0,0,0])
+    translation_vec = np.float32([0,0,0])
     
-    reproject_obj_pts, _  = cv2.projectPoints(object_pts, rotation_vec, translation_vec, cam_matrix,dist_coeffs)
-    pts_obj = np.array((reproject_obj_pts[5],reproject_obj_pts[6],reproject_obj_pts[9],reproject_obj_pts[8]),np.float32)
-    pts_shape = np.array((shape[39],shape[42],shape[35],shape[31]),np.float32)
-    print(pts_obj)
-    #homography_mat = cv2.getPerspectiveTransform(pts_obj, pts_shape)
-    #print(homography_mat)
+    #reproject_obj_pts, _  = cv2.projectPoints(object_pts, rotation_vec, translation_vec, cam_matrix,dist_coeffs)
+    #reproject_obj_pts = tuple(map(tuple, reproject_obj_pts.reshape(14, 2)))
 
+    reproject_obj_pts = np.float32([[object_pts[0][0],object_pts[0][1]],
+                                    [object_pts[1][0],object_pts[1][1]],
+                                    [object_pts[2][0],object_pts[2][1]],
+                                    [object_pts[3][0],object_pts[3][1]],
+                                    [object_pts[4][0],object_pts[4][1]],
+                                    [object_pts[5][0],object_pts[5][1]],
+                                    [object_pts[6][0],object_pts[6][1]],
+                                    [object_pts[7][0],object_pts[7][1]],
+                                    [object_pts[8][0],object_pts[8][1]],
+                                    [object_pts[9][0],object_pts[9][1]],
+                                    [object_pts[10][0],object_pts[10][1]],
+                                    [object_pts[11][0],object_pts[11][1]],
+                                    [object_pts[12][0],object_pts[12][1]],
+                                    [object_pts[13][0],object_pts[13][1]]])
+    reproject_obj_pts = reproject_obj_pts * 50
+
+    pts_obj = np.float32([reproject_obj_pts[9], reproject_obj_pts[8], reproject_obj_pts[6], reproject_obj_pts[5]])
+    pts_shape = np.float32([shape[39], shape[42], shape[31], shape[35]])
+    homography_mat = cv2.getPerspectiveTransform(pts_obj,pts_shape)
+
+    rows = 1024
+    cols = 1024
+    img = np.zeros((rows, cols, 3), np.uint8)
+    img[:,:,:] = [255,255,255]
+    """
+    for (x, y, z) in object_pts:
+        cv2.circle(img, (x.astype('int8') + 512, y.astype('int8') + 512), 2, (0, 0, 0), -1)
+    """
+    for (x, y) in shape:
+        point = np.array([[x],
+                          [y],
+                          [1]])
+        proj_point = np.dot(np.linalg.inv(homography_mat), point)
+        cv2.circle(img, (proj_point[0] + 512, proj_point[1] + 512), 1, (0, 0, 0), -1)
+    
+    cv2.imshow("test", img)
     return 0
 #====================#               end               #====================#
 
