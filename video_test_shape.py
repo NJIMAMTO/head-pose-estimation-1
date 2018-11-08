@@ -156,8 +156,7 @@ def main():
                     if i in { 17, 19, 21, 22, 24, 26, 38, 43, 48, 51, 54, 57, 62, 66}:
                         tmp_shapelist = np.append(tmp_shapelist, x)
                         tmp_shapelist = np.append(tmp_shapelist, y)
-                series = pd.Series(tmp_shapelist, index=data_frame.columns)
-                data_frame = data_frame.append(series, ignore_index = True)
+                data_frame = pd.DataFrame(tmp_shapelist, columns=data_frame.columns)
                 print(data_frame)
 
                 #print(trans_Vec[0] / 100 ,-trans_Vec[1] / 100, -trans_Vec[2] / 100)
