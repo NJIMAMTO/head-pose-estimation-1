@@ -2,6 +2,7 @@ import cv2
 import dlib
 import numpy as np
 from imutils import face_utils
+import pandas as pd
 
 #import pandas as pd
 
@@ -103,7 +104,7 @@ def HT_head_pose(frame,shape):
     
     cv2.imshow("test", img)
     #====================end====================#
-    return 0
+    return proj_point
 #====================#               end               #====================#
 
 def main():
@@ -115,6 +116,18 @@ def main():
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(face_landmark_path)
 
+    #Save_file
+    cols=["left_eyebrow_1", "left_eyebrow_2", "left_eyebrow_3",
+             "right_eyebrow_1", "right_eyebrow_2", "right_eyebrow_3",
+             "left_captain", "right_captain",
+             "left_lip", "lip_center_upper", "right_lip", "lip_center_lower",
+             "mouth_upper", "mouth_lower",
+             
+             "trans_x", "trans_y", "trans_z",
+             "rot_x", "rot_y", "rot_z"] 
+    data_frame = pd.DataFrame(index=[], columns=cols)
+    tmp_shapelist = np.array([])
+
     while cap.isOpened():
         ret, frame = cap.read()
         if ret:
@@ -125,10 +138,11 @@ def main():
                 shape = face_utils.shape_to_np(shape)
 
                 reprojectdst, euler_angle, trans_Vec = get_head_pose(shape)
-                HT_head_pose(frame,shape)
+                HT_shape = HT_head_pose(frame,shape)
 
+                """
                 for i, (x, y) in enumerate(shape):
-                    if i in { 17, 19, 21, 22, 24, 26, 48, 51, 54, 57, 62, 66}:
+                    if i in { 17, 19, 21, 22, 24, 26, 38, 43, 48, 51, 54, 57, 62, 66}:
                         cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)
                         #(x,y) outputed files
 
@@ -137,19 +151,16 @@ def main():
 
                     else:
                         cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
+                """
+                for i,(x, y) in enumerate(HT_shape):
+                    if i in { 17, 19, 21, 22, 24, 26, 38, 43, 48, 51, 54, 57, 62, 66}:
+                        tmp_shapelist = np.append(tmp_shapelist, x)
+                        tmp_shapelist = np.append(tmp_shapelist, y)
+                series = pd.Series(tmp_shapelist, index=data_frame.columns)
+                data_frame = data_frame.append(series, ignore_index = True)
+                print(data_frame)
 
-                #print(trans_Vec[0] / 1000)
-                
-                for start, end in line_pairs:
-                    cv2.line(frame, reprojectdst[start], reprojectdst[end], (0, 0, 255))
-                """
-                cv2.putText(frame, trans_Vec[0], (20, 20), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (255, 255, 255), thickness=2)
-                cv2.putText(frame, trans_Vec[1], (20, 50), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (255, 255, 255), thickness=2)
-                cv2.putText(frame, trans_Vec[2], (20, 80), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (255, 255, 255), thickness=2)
-                """
+                #print(trans_Vec[0] / 100 ,-trans_Vec[1] / 100, -trans_Vec[2] / 100)
                 #====================euler_angle[0, 0] -> euler_angle[2, 0] outputed files ====================#
                 cv2.putText(frame, "X: " + "{:7.2f}".format(euler_angle[0, 0]), (20, 20), cv2.FONT_HERSHEY_SIMPLEX,
                             0.75, (255, 255, 255), thickness=2)
@@ -157,6 +168,8 @@ def main():
                             0.75, (255, 255, 255), thickness=2)
                 cv2.putText(frame, "Z: " + "{:7.2f}".format(euler_angle[2, 0]), (20, 80), cv2.FONT_HERSHEY_SIMPLEX,
                             0.75, (255, 255, 255), thickness=2)
+
+                
                 
             cv2.imshow("demo", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
