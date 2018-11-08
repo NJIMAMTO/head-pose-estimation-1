@@ -117,16 +117,16 @@ def main():
     predictor = dlib.shape_predictor(face_landmark_path)
 
     #Save_file
-    cols=["left_eyebrow_1", "left_eyebrow_2", "left_eyebrow_3",
-             "right_eyebrow_1", "right_eyebrow_2", "right_eyebrow_3",
-             "left_captain", "right_captain",
-             "left_lip", "lip_center_upper", "right_lip", "lip_center_lower",
-             "mouth_upper", "mouth_lower",
+    cols=["left_eyebrow_1x", "left_eyebrow_1y", "left_eyebrow_2x", "left_eyebrow_2y", "left_eyebrow_3x", "left_eyebrow_3y",
+          "right_eyebrow_1x", "right_eyebrow_1y", "right_eyebrow_2x", "right_eyebrow_2y", "right_eyebrow_3x", "right_eyebrow_3y",
+          "left_captain_x", "left_captain_y", "right_captain_x", "right_captain_y",
+          "left_lip_x", "left_lip_y", "lip_center_upper_x", "lip_center_upper_y", "right_lip_x", "right_lip_y", "lip_center_lower_x", "lip_center_lower_y",
+          "mouth_upper_x", "mouth_upper_y", "mouth_lower_x", "mouth_lower_y",
              
-             "trans_x", "trans_y", "trans_z",
-             "rot_x", "rot_y", "rot_z"] 
+          "trans_x", "trans_y", "trans_z",
+          "rot_x", "rot_y", "rot_z"] 
     data_frame = pd.DataFrame(index=[], columns=cols)
-    tmp_shapelist = np.array([])
+    tmp_list = np.array([])
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -154,21 +154,19 @@ def main():
                 """
                 for i,(x, y) in enumerate(HT_shape):
                     if i in { 17, 19, 21, 22, 24, 26, 38, 43, 48, 51, 54, 57, 62, 66}:
-                        tmp_shapelist = np.append(tmp_shapelist, x)
-                        tmp_shapelist = np.append(tmp_shapelist, y)
-                data_frame = pd.DataFrame(tmp_shapelist, columns=data_frame.columns)
+                        tmp_list = np.append(tmp_list, x)
+                        tmp_list = np.append(tmp_list, y)
+
+                tmp_list = np.append(tmp_list, trans_Vec[0] / 100)
+                tmp_list = np.append(tmp_list, trans_Vec[1] / 100)
+                tmp_list = np.append(tmp_list, trans_Vec[2] / 100)
+
+                tmp_list = np.append(tmp_list, euler_angle[0, 0])
+                tmp_list = np.append(tmp_list, euler_angle[1, 0])
+                tmp_list = np.append(tmp_list, euler_angle[2, 0])
+
+                data_frame = pd.DataFrame(tmp_list, columns=data_frame.columns)
                 print(data_frame)
-
-                #print(trans_Vec[0] / 100 ,-trans_Vec[1] / 100, -trans_Vec[2] / 100)
-                #====================euler_angle[0, 0] -> euler_angle[2, 0] outputed files ====================#
-                cv2.putText(frame, "X: " + "{:7.2f}".format(euler_angle[0, 0]), (20, 20), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (255, 255, 255), thickness=2)
-                cv2.putText(frame, "Y: " + "{:7.2f}".format(euler_angle[1, 0]), (20, 50), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (255, 255, 255), thickness=2)
-                cv2.putText(frame, "Z: " + "{:7.2f}".format(euler_angle[2, 0]), (20, 80), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (255, 255, 255), thickness=2)
-
-                
                 
             cv2.imshow("demo", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
