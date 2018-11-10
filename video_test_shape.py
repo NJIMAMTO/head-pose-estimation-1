@@ -1,10 +1,9 @@
+import sys
 import cv2
 import dlib
 import numpy as np
 from imutils import face_utils
 import pandas as pd
-
-#import pandas as pd
 
 face_landmark_path = 'shape_predictor_68_face_landmarks.dat'
 
@@ -109,7 +108,9 @@ def HT_head_pose(frame,shape):
 
 def main():
     # return
-    cap = cv2.VideoCapture(0)
+    args = sys.argv
+    cap = cv2.VideoCapture(args[1])
+    #cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print("Unable to connect to camera.")
         return
@@ -126,7 +127,6 @@ def main():
           "trans_x", "trans_y", "trans_z",
           "rot_x", "rot_y", "rot_z"] 
     data_frame = pd.DataFrame(index=[], columns=cols)
-    tmp_list = np.array([])
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -134,44 +134,34 @@ def main():
             face_rects = detector(frame, 0)
 
             if len(face_rects) > 0:
+                tmp_list = np.array([])
+
                 shape = predictor(frame, face_rects[0])
                 shape = face_utils.shape_to_np(shape)
 
-                reprojectdst, euler_angle, trans_Vec = get_head_pose(shape)
+                _ , euler_angle, trans_Vec = get_head_pose(shape)
                 HT_shape = HT_head_pose(frame,shape)
 
-                """
-                for i, (x, y) in enumerate(shape):
-                    if i in { 17, 19, 21, 22, 24, 26, 38, 43, 48, 51, 54, 57, 62, 66}:
-                        cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)
-                        #(x,y) outputed files
-
-                    elif i in {39, 42, 27, 33}: #kizyun ziku
-                        cv2.circle(frame, (x, y), 1, (255, 0, 0), -1)
-
-                    else:
-                        cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
-                """
                 for i,(x, y) in enumerate(HT_shape):
                     if i in { 17, 19, 21, 22, 24, 26, 38, 43, 48, 51, 54, 57, 62, 66}:
-                        tmp_list = np.append(tmp_list, x)
-                        tmp_list = np.append(tmp_list, y)
-
-                tmp_list = np.append(tmp_list, trans_Vec[0] / 100)
-                tmp_list = np.append(tmp_list, trans_Vec[1] / 100)
-                tmp_list = np.append(tmp_list, trans_Vec[2] / 100)
-
-                tmp_list = np.append(tmp_list, euler_angle[0, 0])
-                tmp_list = np.append(tmp_list, euler_angle[1, 0])
-                tmp_list = np.append(tmp_list, euler_angle[2, 0])
-
-                data_frame = pd.DataFrame(tmp_list, columns=data_frame.columns)
-                print(data_frame)
+                        tmp_list = np.append(tmp_list, [x, y])
+                tmp_list = np.append(tmp_list, [trans_Vec[0]/100, trans_Vec[1]/100, trans_Vec[1]/100])
+                tmp_list = np.append(tmp_list, [euler_angle[0, 0], euler_angle[1, 0], euler_angle[2, 0]])
+                
+                df = pd.Series(tmp_list, index = data_frame.columns)
+                data_frame = data_frame.append(df,ignore_index = True)
+                
                 
             cv2.imshow("demo", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-
+        else:
+            break
+            
+    print("end")
+    cap.release()
+    cv2.destroyAllWindows()
+    data_frame.to_csv(args[2])
 
 if __name__ == '__main__':
     main()
