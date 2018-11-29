@@ -103,7 +103,7 @@ def HT_head_pose(frame,shape):
         cv2.circle(img, (int(xp) + 320, int(yp) + 240), 3, (0, 0, 0), -1)
         cv2.circle(img, (xs + 512, ys + 512), 1, (0, 0, 0), -1)
     
-    cv2.imshow("test", img)
+    #cv2.imshow("test", img)
     #====================end====================#
     return proj_point
 #====================#               end               #====================#
@@ -119,17 +119,11 @@ def main():
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(face_landmark_path)
 
-    #Save_file
-    cols=["left_eyebrow_1x", "left_eyebrow_1y", "left_eyebrow_2x", "left_eyebrow_2y", "left_eyebrow_3x", "left_eyebrow_3y",
-          "right_eyebrow_1x", "right_eyebrow_1y", "right_eyebrow_2x", "right_eyebrow_2y", "right_eyebrow_3x", "right_eyebrow_3y",
-          "left_captain_x", "left_captain_y", "right_captain_x", "right_captain_y",
-          "left_lip_x", "left_lip_y", "lip_center_upper_x", "lip_center_upper_y", "right_lip_x", "right_lip_y", "lip_center_lower_x", "lip_center_lower_y",
-          "mouth_upper_x", "mouth_upper_y", "mouth_lower_x", "mouth_lower_y",
-             
-          "trans_x", "trans_y", "trans_z",
-          "rot_x", "rot_y", "rot_z"] 
+    #Save_file (feature points -> https://cloud.githubusercontent.com/assets/16308037/24229391/1910e9cc-0fb4-11e7-987b-0fecce2c829e.JPG)
+    cols = ["18-37","20-37","22-37","23-46","25-46","27-46","49-34","52-34","55-34","58-34",
+            "trans_x", "trans_y", "trans_z",
+            "rot_x", "rot_y", "rot_z"] 
     data_frame = pd.DataFrame(index=[], columns=cols)
-
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -145,10 +139,18 @@ def main():
                 _ , euler_angle, trans_Vec = get_head_pose(shape)
                 HT_shape = HT_head_pose(frame,shape)
 
-                for i,(x, y) in enumerate(HT_shape):
-                    if i in { 17, 19, 21, 22, 24, 26, 38, 43, 48, 51, 54, 57, 62, 66}:
-                        tmp_list = np.append(tmp_list, [x, y])
-                
+                Reference_point = np.float32([HT_shape[36], HT_shape[45], HT_shape[33]])
+                for i in range(68):
+                    if i in { 17, 19, 21}:
+                        norm = np.linalg.norm(HT_shape[i] - Reference_point[0], ord=2)
+                        tmp_list = np.append(tmp_list, norm)
+                    elif i in {22, 24, 26}:
+                        norm = np.linalg.norm(HT_shape[i] - Reference_point[1], ord=2)
+                        tmp_list = np.append(tmp_list, norm)
+                    elif i in {48, 51, 54, 57}:
+                        norm = np.linalg.norm(HT_shape[i] - Reference_point[2], ord=2)
+                        tmp_list = np.append(tmp_list, norm)
+
                 tmp_list = np.append(tmp_list, [trans_Vec[0]/100, trans_Vec[1]/100, trans_Vec[1]/100])
                 tmp_list = np.append(tmp_list, [euler_angle[0, 0], euler_angle[1, 0], euler_angle[2, 0]])
                 
@@ -162,8 +164,8 @@ def main():
                 data_frame = data_frame.append(df,ignore_index = True)    
 
             #cv2.imshow("demo", frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+            #if cv2.waitKey(1) & 0xFF == ord('q'):
+            #    break
         else:
             break
             
