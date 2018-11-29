@@ -1,5 +1,3 @@
-# coding: utf-8
-
 import sys
 import cv2
 import dlib
@@ -103,7 +101,7 @@ def HT_head_pose(frame,shape):
         cv2.circle(img, (int(xp) + 320, int(yp) + 240), 3, (0, 0, 0), -1)
         cv2.circle(img, (xs + 512, ys + 512), 1, (0, 0, 0), -1)
     
-    cv2.imshow("test", img)
+    gicv2.imshow("test", img)
     #====================end====================#
     return proj_point
 #====================#               end               #====================#
@@ -130,15 +128,14 @@ def main():
           "rot_x", "rot_y", "rot_z"] 
     data_frame = pd.DataFrame(index=[], columns=cols)
 
-
     while cap.isOpened():
         ret, frame = cap.read()
         if ret:
             face_rects = detector(frame, 0)
-            tmp_list = np.array([])
 
-            #顔が検出されたら実行
             if len(face_rects) > 0:
+                tmp_list = np.array([])
+
                 shape = predictor(frame, face_rects[0])
                 shape = face_utils.shape_to_np(shape)
 
@@ -148,20 +145,14 @@ def main():
                 for i,(x, y) in enumerate(HT_shape):
                     if i in { 17, 19, 21, 22, 24, 26, 38, 43, 48, 51, 54, 57, 62, 66}:
                         tmp_list = np.append(tmp_list, [x, y])
-                
                 tmp_list = np.append(tmp_list, [trans_Vec[0]/100, trans_Vec[1]/100, trans_Vec[1]/100])
                 tmp_list = np.append(tmp_list, [euler_angle[0, 0], euler_angle[1, 0], euler_angle[2, 0]])
                 
                 df = pd.Series(tmp_list, index = data_frame.columns)
-                data_frame = data_frame.append(df,ignore_index = True)           
-            #検出されなかった場合 data_frameに空フレームを追加
-            else:
-                tmp_list = np.zeros([16])
-                tmp_list[:] = np.nan
-                df = pd.Series(tmp_list, index = data_frame.columns)
-                data_frame = data_frame.append(df,ignore_index = True)    
-
-            #cv2.imshow("demo", frame)
+                data_frame = data_frame.append(df,ignore_index = True)
+                
+                
+            cv2.imshow("demo", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         else:
