@@ -112,68 +112,39 @@ def main():
     # return
     args = sys.argv
     cap = cv2.imread(args[1])
-    #cap = cv2.VideoCapture(args[1])
-    #cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        print("Unable to connect to camera.")
-        return
+
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(face_landmark_path)
 
-    #Save_file (feature points -> https://cloud.githubusercontent.com/assets/16308037/24229391/1910e9cc-0fb4-11e7-987b-0fecce2c829e.JPG)
-    cols = ["18-37","20-37","22-37","23-46","25-46","27-46","49-34","52-34","55-34","58-34",
-            "trans_x", "trans_y", "trans_z",
-            "rot_x", "rot_y", "rot_z"] 
-    data_frame = pd.DataFrame(index=[], columns=cols)
+    frame = cap
+    face_rects = detector(frame, 0)
 
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if ret:
-            face_rects = detector(frame, 0)
-            tmp_list = np.array([])
+    #顔が検出されたら実行
+    if len(face_rects) > 0:
+        shape = predictor(frame, face_rects[0])
+        shape = face_utils.shape_to_np(shape)
 
-            #顔が検出されたら実行
-            if len(face_rects) > 0:
-                shape = predictor(frame, face_rects[0])
-                shape = face_utils.shape_to_np(shape)
+        reprojectdst, euler_angle, _ = get_head_pose(shape)
 
-                _ , euler_angle, trans_Vec = get_head_pose(shape)
-                HT_shape = HT_head_pose(frame,shape)
+        for (x, y) in shape:
+            cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
 
-                Reference_point = np.float32([HT_shape[36], HT_shape[45], HT_shape[33]])
-                for i in range(68):
-                    if i in { 17, 19, 21}:
-                        norm = np.linalg.norm(HT_shape[i] - Reference_point[0], ord=2)
-                        tmp_list = np.append(tmp_list, norm)
-                    elif i in {22, 24, 26}:
-                        norm = np.linalg.norm(HT_shape[i] - Reference_point[1], ord=2)
-                        tmp_list = np.append(tmp_list, norm)
-                    elif i in {48, 51, 54, 57}:
-                        norm = np.linalg.norm(HT_shape[i] - Reference_point[2], ord=2)
-                        tmp_list = np.append(tmp_list, norm)
+        for start, end in line_pairs:
+            cv2.line(frame, reprojectdst[start], reprojectdst[end], (0, 0, 255))
 
-                tmp_list = np.append(tmp_list, [trans_Vec[0]/100, trans_Vec[1]/100, trans_Vec[1]/100])
-                tmp_list = np.append(tmp_list, [euler_angle[0, 0], euler_angle[1, 0], euler_angle[2, 0]])
-                
-                df = pd.Series(tmp_list, index = data_frame.columns)
-                data_frame = data_frame.append(df,ignore_index = True)           
-            #検出されなかった場合 data_frameに空フレームを追加
-            else:
-                tmp_list = np.zeros([16])
-                tmp_list[:] = np.nan
-                df = pd.Series(tmp_list, index = data_frame.columns)
-                data_frame = data_frame.append(df,ignore_index = True)    
+        cv2.putText(frame, "X: " + "{:7.2f}".format(euler_angle[0, 0]), (20, 20), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.75, (0, 0, 0), thickness=2)
+        cv2.putText(frame, "Y: " + "{:7.2f}".format(euler_angle[1, 0]), (20, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.75, (0, 0, 0), thickness=2)
+        cv2.putText(frame, "Z: " + "{:7.2f}".format(euler_angle[2, 0]), (20, 80), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.75, (0, 0, 0), thickness=2)  
 
-            cv2.imshow("demo", frame)
-            #if cv2.waitKey(1) & 0xFF == ord('q'):
-            #   break
-        else:
-            break
+    cv2.imshow("demo", frame)
+    cv2.waitKey(50000)
             
     print("end")
-    cap.release()
+    #cap.release()
     cv2.destroyAllWindows()
-    data_frame.to_csv(args[2])
 
 if __name__ == '__main__':
     main()
