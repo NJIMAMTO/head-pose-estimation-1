@@ -101,7 +101,7 @@ def HT_head_pose(frame,shape):
         cv2.circle(img, (int(xp) + 320, int(yp) + 240), 3, (0, 0, 0), -1)
         cv2.circle(img, (xs + 512, ys + 512), 1, (0, 0, 0), -1)
     
-    gicv2.imshow("test", img)
+    cv2.imshow("test", img)
     #====================end====================#
     return proj_point
 #====================#               end               #====================#

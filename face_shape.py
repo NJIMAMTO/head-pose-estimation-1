@@ -45,71 +45,82 @@ line_pairs = [[0, 1], [1, 2], [2, 3], [3, 0],
               [4, 5], [5, 6], [6, 7], [7, 4],
               [0, 4], [1, 5], [2, 6], [3, 7]]
 
-
-def get_head_pose(shape):
-    image_pts = np.float32([shape[17], shape[21], shape[22], shape[26], shape[36],
+class Head_Pose:
+    def __init__(self,shape)
+        self.image_pts =  = np.float32([shape[17], shape[21], shape[22], shape[26], shape[36],
                             shape[39], shape[42], shape[45], shape[31], shape[35],
                             shape[48], shape[54], shape[57], shape[8]])
 
-    _, rotation_vec, translation_vec = cv2.solvePnP(object_pts, image_pts, cam_matrix, dist_coeffs)
+    def get(self):
+        _, rotation_vec, translation_vec = cv2.solvePnP(object_pts, self.image_pts, cam_matrix, dist_coeffs)
 
-    reprojectdst, _ = cv2.projectPoints(reprojectsrc, rotation_vec, translation_vec, cam_matrix,
-                                        dist_coeffs)
+        reprojectdst, _ = cv2.projectPoints(reprojectsrc, rotation_vec, translation_vec, cam_matrix,
+                                            dist_coeffs)
 
-    reprojectdst = tuple(map(tuple, reprojectdst.reshape(8, 2)))
+        reprojectdst = tuple(map(tuple, reprojectdst.reshape(8, 2)))
 
-    # calc euler angle
-    rotation_mat, _ = cv2.Rodrigues(rotation_vec)
-    pose_mat = cv2.hconcat((rotation_mat, translation_vec))
-    #print(pose_mat)
-    cameraMatrix, rotMatrix, TRANS_VEC, rotMatrixX, rotMatrixY, rotMatrixZ, EULER_ANGLE = cv2.decomposeProjectionMatrix(pose_mat)
+        # calc euler angle
+        rotation_mat, _ = cv2.Rodrigues(rotation_vec)
+        pose_mat = cv2.hconcat((rotation_mat, translation_vec))
+        #print(pose_mat)
+        cameraMatrix, rotMatrix, TRANS_VEC, rotMatrixX, rotMatrixY, rotMatrixZ, EULER_ANGLE = cv2.decomposeProjectionMatrix(pose_mat)
 
-    return reprojectdst, EULER_ANGLE, translation_vec
+        return reprojectdst, EULER_ANGLE, translation_vec
 
-#====================#Homography Transformation of face#====================#
+    #====================#Homography Transformation of face#====================#
 
-def HT_head_pose(frame,shape): 
-    reproject_obj_pts = np.float32([[object_pts[0][0],object_pts[0][1]],
-                                    [object_pts[1][0],object_pts[1][1]],
-                                    [object_pts[2][0],object_pts[2][1]],
-                                    [object_pts[3][0],object_pts[3][1]],
-                                    [object_pts[4][0],object_pts[4][1]],
-                                    [object_pts[5][0],object_pts[5][1]],
-                                    [object_pts[6][0],object_pts[6][1]],
-                                    [object_pts[7][0],object_pts[7][1]],
-                                    [object_pts[8][0],object_pts[8][1]],
-                                    [object_pts[9][0],object_pts[9][1]],
-                                    [object_pts[10][0],object_pts[10][1]],
-                                    [object_pts[11][0],object_pts[11][1]],
-                                    [object_pts[12][0],object_pts[12][1]],
-                                    [object_pts[13][0],object_pts[13][1]]])  
-    reproject_obj_pts = reproject_obj_pts * -30
-    image_pts = np.float32([shape[17], shape[21], shape[22], shape[26], shape[36],
-                            shape[39], shape[42], shape[45], shape[31], shape[35],
-                            shape[48], shape[54], shape[57], shape[8]])
+    def Homography_Trans(self,frame,shape): 
+        #objct_ptsからxy座標のみを抽出
+        reproject_obj_pts = np.float32([[object_pts[0][0],object_pts[0][1]],
+                                        [object_pts[1][0],object_pts[1][1]],
+                                        [object_pts[2][0],object_pts[2][1]],
+                                        [object_pts[3][0],object_pts[3][1]],
+                                        [object_pts[4][0],object_pts[4][1]],
+                                        [object_pts[5][0],object_pts[5][1]],
+                                        [object_pts[6][0],object_pts[6][1]],
+                                        [object_pts[7][0],object_pts[7][1]],
+                                        [object_pts[8][0],object_pts[8][1]],
+                                        [object_pts[9][0],object_pts[9][1]],
+                                        [object_pts[10][0],object_pts[10][1]],
+                                        [object_pts[11][0],object_pts[11][1]],
+                                        [object_pts[12][0],object_pts[12][1]],
+                                        [object_pts[13][0],object_pts[13][1]]])  
+        reproject_obj_pts = reproject_obj_pts * -30
 
-    #homography_mat,_ = cv2.findHomography(reproject_obj_pts, image_pts, 0, 3)
-    homography_mat,_ = cv2.findHomography(image_pts, reproject_obj_pts, 0, 3)
-    proj_point = cv2.perspectiveTransform(np.array([shape.astype('float32')]), homography_mat)
-    proj_point = tuple(map(tuple, proj_point.reshape(68, 2)))
+        homography_mat,_ = cv2.findHomography(self.image_pts, reproject_obj_pts, 0, 3)
+        proj_point = cv2.perspectiveTransform(np.array([shape.astype('float32')]), homography_mat)
+        proj_point = tuple(map(tuple, proj_point.reshape(68, 2)))
 
-    #====================set white image=====================#
-    rows = 1024
-    cols = 1024
-    img = np.zeros((rows, cols, 3), np.uint8)
-    img[:,:,:] = [255,255,255]
+        #====================set white image=====================#
+        rows = 1024
+        cols = 1024
+        img = np.zeros((rows, cols, 3), np.uint8)
+        img[:,:,:] = [255,255,255]
 
-    for (xs, ys),(xp, yp) in zip(shape, proj_point):
-        cv2.circle(img, (int(xp) + 320, int(yp) + 240), 3, (0, 0, 0), -1)
-        cv2.circle(img, (xs + 512, ys + 512), 1, (0, 0, 0), -1)
-    
-    cv2.imshow("test", img)
-    #====================end====================#
-    return proj_point
-#====================#               end               #====================#
+        for (xs, ys),(xp, yp) in zip(shape, proj_point):
+            cv2.circle(img, (int(xp) + 320, int(yp) + 240), 3, (0, 0, 0), -1)
+            cv2.circle(img, (xs + 512, ys + 512), 1, (0, 0, 0), -1)
+        
+        cv2.imshow("test", img)
+        #====================end====================#
+        return proj_point
+    #====================#               end               #====================#
 
 def main():
-    # return
+    """
+    path = "/media/mokugyo/ボリューム/3Dface"
+    folder = ["F_Angry","F_Disgust","F_Fear","F_Happy","F_Neutral","F_Surprise","F_Unhappy",
+        "M_Angry","M_Disgust","M_Fear","M_Happy","M_Neutral","M_Surprise","M_Unhappy"]
+    V_S = ["V0S","V2L"]
+    E_S = ["_A","_D","_F","_H","_N","_S","_U"] 
+
+    for i in range(0,14):
+        for x in range(0, 1):
+            file_path = path + "/" + folder[i] + "/" + V_S[x] + E_S[i%7]
+            print(file_path)
+            cap = cv2.VideoCapture(file_path + '.mp4')
+            """
+
     args = sys.argv
     cap = cv2.VideoCapture(args[1])
     #cap = cv2.VideoCapture(0)
@@ -136,8 +147,9 @@ def main():
                 shape = predictor(frame, face_rects[0])
                 shape = face_utils.shape_to_np(shape)
 
-                _ , euler_angle, trans_Vec = get_head_pose(shape)
-                HT_shape = HT_head_pose(frame,shape)
+                HP = Head_Pose()
+                _ , euler_angle, trans_Vec = HP.get(shape)
+                HT_shape = HP.Homography_Trans(frame,shape)
 
                 Reference_point = np.float32([HT_shape[36], HT_shape[45], HT_shape[33]])
                 for i in range(68):
@@ -151,11 +163,12 @@ def main():
                         norm = np.linalg.norm(HT_shape[i] - Reference_point[2], ord=2)
                         tmp_list = np.append(tmp_list, norm)
 
-                tmp_list = np.append(tmp_list, trans_Vec[0]/100, trans_Vec[1]/100, trans_Vec[1]/100])
-                tmp_list = np.append(tmp_list, euler_angle[0, 0], euler_angle[1, 0], euler_angle[2, 0]])
-                
+                tmp_list = np.append(tmp_list, [trans_Vec[0]/100, trans_Vec[1]/100, trans_Vec[1]/100])
+                tmp_list = np.append(tmp_list, [euler_angle[0, 0], euler_angle[1, 0], euler_angle[2, 0]])
+                        
                 df = pd.Series(tmp_list, index = data_frame.columns)
-                data_frame = data_frame.append(df,ignore_index = True)           
+                data_frame = data_frame.append(df,ignore_index = True) 
+
             #検出されなかった場合 data_frameに空フレームを追加
             else:
                 tmp_list = np.zeros([16])
@@ -165,14 +178,15 @@ def main():
 
             cv2.imshow("demo", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+                        break
         else:
             break
-            
+                    
     print("end")
     cap.release()
     cv2.destroyAllWindows()
     data_frame.to_csv(args[2])
+    #data_frame.to_csv(file_path + '.csv')
 
 if __name__ == '__main__':
     main()
