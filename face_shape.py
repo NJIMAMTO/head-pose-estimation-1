@@ -46,10 +46,11 @@ line_pairs = [[0, 1], [1, 2], [2, 3], [3, 0],
               [0, 4], [1, 5], [2, 6], [3, 7]]
 
 class Head_Pose:
-    def __init__(self,shape)
-        self.image_pts =  = np.float32([shape[17], shape[21], shape[22], shape[26], shape[36],
+    def __init__(self,shape):
+        self.image_pts = np.float32([shape[17], shape[21], shape[22], shape[26], shape[36],
                             shape[39], shape[42], shape[45], shape[31], shape[35],
                             shape[48], shape[54], shape[57], shape[8]])
+        self.shape = shape
 
     def get(self):
         _, rotation_vec, translation_vec = cv2.solvePnP(object_pts, self.image_pts, cam_matrix, dist_coeffs)
@@ -69,7 +70,7 @@ class Head_Pose:
 
     #====================#Homography Transformation of face#====================#
 
-    def Homography_Trans(self,frame,shape): 
+    def Homography_Trans(self,frame): 
         #objct_ptsからxy座標のみを抽出
         reproject_obj_pts = np.float32([[object_pts[0][0],object_pts[0][1]],
                                         [object_pts[1][0],object_pts[1][1]],
@@ -88,7 +89,7 @@ class Head_Pose:
         reproject_obj_pts = reproject_obj_pts * -30
 
         homography_mat,_ = cv2.findHomography(self.image_pts, reproject_obj_pts, 0, 3)
-        proj_point = cv2.perspectiveTransform(np.array([shape.astype('float32')]), homography_mat)
+        proj_point = cv2.perspectiveTransform(np.array([self.shape.astype('float32')]), homography_mat)
         proj_point = tuple(map(tuple, proj_point.reshape(68, 2)))
 
         #====================set white image=====================#
@@ -97,7 +98,7 @@ class Head_Pose:
         img = np.zeros((rows, cols, 3), np.uint8)
         img[:,:,:] = [255,255,255]
 
-        for (xs, ys),(xp, yp) in zip(shape, proj_point):
+        for (xs, ys),(xp, yp) in zip(self.shape, proj_point):
             cv2.circle(img, (int(xp) + 320, int(yp) + 240), 3, (0, 0, 0), -1)
             cv2.circle(img, (xs + 512, ys + 512), 1, (0, 0, 0), -1)
         
@@ -147,9 +148,9 @@ def main():
                 shape = predictor(frame, face_rects[0])
                 shape = face_utils.shape_to_np(shape)
 
-                HP = Head_Pose()
-                _ , euler_angle, trans_Vec = HP.get(shape)
-                HT_shape = HP.Homography_Trans(frame,shape)
+                HP = Head_Pose(shape)
+                _ , euler_angle, trans_Vec = HP.get()
+                HT_shape = HP.Homography_Trans(frame)
 
                 Reference_point = np.float32([HT_shape[36], HT_shape[45], HT_shape[33]])
                 for i in range(68):
