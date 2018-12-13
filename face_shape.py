@@ -138,8 +138,12 @@ def main():
     data_frame = pd.DataFrame(index=[], columns=cols)
 
     while cap.isOpened():
-        ret, frame = cap.read()
+        ret, im = cap.read()
         if ret:
+            ########################
+            #frame = im[960:1980,0:540]
+            frame = im[540:1080,0:960]
+            ########################
             face_rects = detector(frame, 0)
             tmp_list = np.array([])
 
@@ -179,9 +183,11 @@ def main():
 
             cv2.imshow("demo", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
-                        break
+                break
         else:
             break
+
+        cap.read()
                     
     print("end")
     cap.release()
