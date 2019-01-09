@@ -85,7 +85,7 @@ def main():
                 reprojectdst, euler_angle = get_head_pose(shape)
 
                 for (x, y) in shape:
-                    cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
+                    cv2.circle(frame, (x, y), 1, (0, 0, 255), -1):
 
                 for start, end in line_pairs:
                     cv2.line(frame, reprojectdst[start], reprojectdst[end], (0, 0, 255))
