@@ -97,7 +97,7 @@ def main():
                 cv2.putText(frame, "Z: " + "{:7.2f}".format(euler_angle[2, 0]), (20, 80), cv2.FONT_HERSHEY_SIMPLEX,
                             0.75, (255, 255, 255), thickness=2)
                 
-                #print(tuple(translation_vec))
+                #print(tuple(translation_vec))h
 
                 cv2.putText(frame, "{:7.2f}".format(translation_vec[0, 0]), (160, 20), cv2.FONT_HERSHEY_SIMPLEX,
                             0.75, (255, 255, 255), thickness=2)
