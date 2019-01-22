@@ -66,7 +66,7 @@ def get_head_pose(shape):
 def main():
     # return
     args = sys.argv
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print("Unable to connect to camera.")
         return
@@ -85,25 +85,31 @@ def main():
                 reprojectdst, euler_angle, translation_vec = get_head_pose(shape)
 
                 for (x, y) in shape:
-                    cv2.circle(frame, (x, y), 1, (0, 0, 255), -1):
+                    cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
 
                 for start, end in line_pairs:
                     cv2.line(frame, reprojectdst[start], reprojectdst[end], (0, 0, 255))
 
-                cv2.putText(frame, "X: " + "{:7.2f}".format(euler_angle[0, 0]), (20, 20), cv2.FONT_HERSHEY_SIMPLEX,
+
+
+                cv2.putText(frame, "   =angles= =Trans=", 
+                            (20, 20), cv2.FONT_HERSHEY_SIMPLEX,
                             0.75, (255, 255, 255), thickness=2)
-                cv2.putText(frame, "Y: " + "{:7.2f}".format(euler_angle[1, 0]), (20, 50), cv2.FONT_HERSHEY_SIMPLEX,
+
+                cv2.putText(frame, "X: " + "{:7.2f}".format(euler_angle[0, 0]), (20, 50), cv2.FONT_HERSHEY_SIMPLEX,
                             0.75, (255, 255, 255), thickness=2)
-                cv2.putText(frame, "Z: " + "{:7.2f}".format(euler_angle[2, 0]), (20, 80), cv2.FONT_HERSHEY_SIMPLEX,
+                cv2.putText(frame, "Y: " + "{:7.2f}".format(euler_angle[1, 0]), (20, 80), cv2.FONT_HERSHEY_SIMPLEX,
+                            0.75, (255, 255, 255), thickness=2)
+                cv2.putText(frame, "Z: " + "{:7.2f}".format(euler_angle[2, 0]), (20, 110), cv2.FONT_HERSHEY_SIMPLEX,
                             0.75, (255, 255, 255), thickness=2)
                 
                 #print(tuple(translation_vec))h
 
-                cv2.putText(frame, "{:7.2f}".format(translation_vec[0, 0]), (160, 20), cv2.FONT_HERSHEY_SIMPLEX,
+                cv2.putText(frame, "{:7.2f}".format(translation_vec[0, 0]), (160, 50), cv2.FONT_HERSHEY_SIMPLEX,
                             0.75, (255, 255, 255), thickness=2)
-                cv2.putText(frame, "{:7.2f}".format(translation_vec[1, 0]), (160, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                cv2.putText(frame, "{:7.2f}".format(translation_vec[1, 0]), (160, 80), cv2.FONT_HERSHEY_SIMPLEX,
                             0.75, (255, 255, 255), thickness=2)
-                cv2.putText(frame, "{:7.2f}".format(translation_vec[2, 0]), (160, 80), cv2.FONT_HERSHEY_SIMPLEX,
+                cv2.putText(frame, "{:7.2f}".format(translation_vec[2, 0]), (160, 110), cv2.FONT_HERSHEY_SIMPLEX,
                             0.75, (255, 255, 255), thickness=2)
                 
                 
