@@ -6,10 +6,19 @@ from imutils import face_utils
 
 face_landmark_path = './shape_predictor_68_face_landmarks.dat'
 
-K = [6.5308391993466671e+002, 0.0, 3.1950000000000000e+002,
-     0.0, 6.5308391993466671e+002, 2.3950000000000000e+002,
+"""
+#Webcam
+K = [6.5308391993466671e+002, 0.0, 320,
+     0.0, 6.5308391993466671e+002, 240,
      0.0, 0.0, 1.0]
 D = [7.0834633684407095e-002, 6.9140193737175351e-002, 0.0, 0.0, -1.3073460323689292e+000]
+
+"""
+#3Dface
+K = [3888.0, 0.0, 600,
+     0.0, 3888.0, 600,
+     0.0, 0.0, 1.0]
+D = [0, 0, 0.0, 0.0, 0]
 
 cam_matrix = np.array(K).reshape(3, 3).astype(np.float32)
 dist_coeffs = np.array(D).reshape(5, 1).astype(np.float32)
@@ -66,7 +75,7 @@ def get_head_pose(shape):
 def main():
     # return
     args = sys.argv
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(args[1])
     if not cap.isOpened():
         print("Unable to connect to camera.")
         return
@@ -118,8 +127,9 @@ def main():
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-    cap.release()
-    cv2.destroyAllWindows()
+        else:
+            cap.release()
+            cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main()
