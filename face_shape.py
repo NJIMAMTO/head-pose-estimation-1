@@ -198,9 +198,10 @@ def main():
                             
             print("end")
             cap.release()
-            cv2.destroyAllWindows()
+            
             #data_frame.to_csv(args[2])
             data_frame.to_csv(file_path + '.csv')
+    cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main()
