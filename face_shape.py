@@ -125,10 +125,10 @@ def main():
     path = "/media/mokugyo/ボリューム/3Dface"
     folder = ["F_Angry","F_Disgust","F_Fear","F_Happy","F_Neutral","F_Surprise","F_Unhappy",
         "M_Angry","M_Disgust","M_Fear","M_Happy","M_Neutral","M_Surprise","M_Unhappy"]
-    V_S = ["V0S","V2L","V4L"]
+    V_S = ["V0S","V2L","V4L","V0S_r","V2L_r","V4L_r"]
 
     for ii in range(0,14):
-        for xx in range(0, 3):
+        for xx in range(0, 6):
             file_path = path + "/" + folder[ii] + "/" + V_S[xx]
             print(file_path)
             cap = cv2.VideoCapture(file_path + '.mp4')
@@ -140,7 +140,7 @@ def main():
             predictor = dlib.shape_predictor(face_landmark_path)
 
             #Save_file (feature points -> https://cloud.githubusercontent.com/assets/16308037/24229391/1910e9cc-0fb4-11e7-987b-0fecce2c829e.JPG)
-            cols = ["18-37","20-37","22-37","23-46","25-46","27-46","49-34","52-34","55-34","58-34",
+            cols = ["class","18-37","20-37","22-37","23-46","25-46","27-46","38-42","45-47","49-34","52-34","55-34","58-34",
                     "trans_x", "trans_y", "trans_z",
                     "rot_x", "rot_y", "rot_z"] 
             data_frame = pd.DataFrame(index=[], columns=cols)
@@ -154,7 +154,7 @@ def main():
                     #frame = im[540:1080,0:960]
                     ########################
                     face_rects = detector(frame, 0)
-                    tmp_list = np.array([])
+                    tmp_list = np.array(int(ii%7))
 
                     #顔が検出されたら実行
                     if len(face_rects) > 0:
@@ -165,16 +165,27 @@ def main():
                         _ , euler_angle, trans_Vec = HP.get()
                         HT_shape = HP.Homography_Trans(frame)
 
-                        Reference_point = np.float32([HT_shape[36], HT_shape[45], HT_shape[33]])
+                        Reference_point = np.float32([HT_shape[36], HT_shape[41], HT_shape[45], HT_shape[46], HT_shape[33]])
                         for i in range(68):
+                            #left_eyebrow
                             if i in { 17, 19, 21}:
                                 norm = np.linalg.norm(HT_shape[i] - Reference_point[0], ord=2)
                                 tmp_list = np.append(tmp_list, norm)
-                            elif i in {22, 24, 26}:
+                            #left_eye
+                            elif i == 37:
                                 norm = np.linalg.norm(HT_shape[i] - Reference_point[1], ord=2)
                                 tmp_list = np.append(tmp_list, norm)
-                            elif i in {48, 51, 54, 57}:
+                            #right_eyebrow
+                            elif i in {22, 24, 26}:
                                 norm = np.linalg.norm(HT_shape[i] - Reference_point[2], ord=2)
+                                tmp_list = np.append(tmp_list, norm)
+                            #right_eye
+                            elif i == 44:
+                                norm = np.linalg.norm(HT_shape[i] - Reference_point[3], ord=2)
+                                tmp_list = np.append(tmp_list, norm)
+                            #mouth
+                            elif i in {48, 51, 54, 57}:
+                                norm = np.linalg.norm(HT_shape[i] - Reference_point[4], ord=2)
                                 tmp_list = np.append(tmp_list, norm)
 
                         tmp_list = np.append(tmp_list, [trans_Vec[0]/100, trans_Vec[1]/100, trans_Vec[1]/100])
@@ -185,7 +196,7 @@ def main():
 
                     #検出されなかった場合 data_frameに空フレームを追加
                     else:
-                        tmp_list = np.zeros([16])
+                        tmp_list = np.zeros([19])
                         tmp_list[:] = np.nan
                         df = pd.Series(tmp_list, index = data_frame.columns)
                         data_frame = data_frame.append(df,ignore_index = True)    

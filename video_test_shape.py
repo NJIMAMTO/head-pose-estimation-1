@@ -75,7 +75,7 @@ def get_head_pose(shape):
 def main():
     # return
     args = sys.argv
-    cap = cv2.VideoCapture(args[1])
+    cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print("Unable to connect to camera.")
         return
