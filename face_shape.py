@@ -140,7 +140,10 @@ def main():
             predictor = dlib.shape_predictor(face_landmark_path)
 
             #Save_file (feature points -> https://cloud.githubusercontent.com/assets/16308037/24229391/1910e9cc-0fb4-11e7-987b-0fecce2c829e.JPG)
-            cols = ["class","18-37","20-37","22-37","23-46","25-46","27-46","38-42","45-47","49-34","52-34","55-34","58-34",
+            cols = ["class","18-37","20-37","22-37",
+                    "23-46","25-46","27-46",
+                    "38-42","45-47",
+                    "49-34","52-34","55-34","58-34",
                     "trans_x", "trans_y", "trans_z",
                     "rot_x", "rot_y", "rot_z"] 
             data_frame = pd.DataFrame(index=[], columns=cols)

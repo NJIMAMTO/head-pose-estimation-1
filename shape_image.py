@@ -9,8 +9,8 @@ import pandas as pd
 
 face_landmark_path = 'shape_predictor_68_face_landmarks.dat'
 
-K = [6.5308391993466671e+002, 0.0, 320,
-     0.0, 6.5308391993466671e+002, 240,
+K = [2000, 0.0, 960,
+     0.0, 2000, 540,
      0.0, 0.0, 1.0]
 D = [7.0834633684407095e-002, 6.9140193737175351e-002, 0.0, 0.0, -1.3073460323689292e+000]
 
@@ -124,22 +124,34 @@ def main():
         shape = predictor(frame, face_rects[0])
         shape = face_utils.shape_to_np(shape)
 
-        reprojectdst, euler_angle, _ = get_head_pose(shape)
+        reprojectdst, euler_angle, translation_vec = get_head_pose(shape)
 
         for (x, y) in shape:
-            cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
+            cv2.circle(frame, (x, y), 8, (0, 0, 255), -1)
 
         for start, end in line_pairs:
-            cv2.line(frame, reprojectdst[start], reprojectdst[end], (0, 0, 255))
+            cv2.line(frame, reprojectdst[start], reprojectdst[end], (0, 0, 255),8)
 
-        cv2.putText(frame, "X: " + "{:7.2f}".format(euler_angle[0, 0]), (20, 20), cv2.FONT_HERSHEY_SIMPLEX,
-                    0.75, (0, 0, 0), thickness=2)
-        cv2.putText(frame, "Y: " + "{:7.2f}".format(euler_angle[1, 0]), (20, 50), cv2.FONT_HERSHEY_SIMPLEX,
-                    0.75, (0, 0, 0), thickness=2)
-        cv2.putText(frame, "Z: " + "{:7.2f}".format(euler_angle[2, 0]), (20, 80), cv2.FONT_HERSHEY_SIMPLEX,
-                    0.75, (0, 0, 0), thickness=2)  
+        cv2.putText(frame, "   =angles= =Trans=", 
+                    (20, 20), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.75, (255, 255, 255), thickness=2)
 
-    cv2.imshow("demo", frame)
+        cv2.putText(frame, "X: " + "{:7.2f}".format(euler_angle[0, 0]), (20, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.75, (255, 255, 255), thickness=2)
+        cv2.putText(frame, "Y: " + "{:7.2f}".format(euler_angle[1, 0]), (20, 80), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.75, (255, 255, 255), thickness=2)
+        cv2.putText(frame, "Z: " + "{:7.2f}".format(euler_angle[2, 0]), (20, 110), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.75, (255, 255, 255), thickness=2)
+
+        cv2.putText(frame, "{:7.2f}".format(translation_vec[0, 0]), (160, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.75, (255, 255, 255), thickness=2)
+        cv2.putText(frame, "{:7.2f}".format(translation_vec[1, 0]), (160, 80), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.75, (255, 255, 255), thickness=2)
+        cv2.putText(frame, "{:7.2f}".format(translation_vec[2, 0]), (160, 110), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.75, (255, 255, 255), thickness=2)      
+
+    cv2.imshow("demo", cv2.resize(frame,(960, 540)))
+    cv2.imwrite("../../12.png",frame)
     cv2.waitKey(50000)
             
     print("end")
