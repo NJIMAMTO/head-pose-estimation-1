@@ -66,48 +66,6 @@ def get_head_pose(shape):
 
     return reprojectdst, EULER_ANGLE, translation_vec
 
-#====================#Homography Transformation of face#====================#
-
-def HT_head_pose(frame,shape): 
-    reproject_obj_pts = np.float32([[object_pts[0][0],object_pts[0][1]],
-                                    [object_pts[1][0],object_pts[1][1]],
-                                    [object_pts[2][0],object_pts[2][1]],
-                                    [object_pts[3][0],object_pts[3][1]],
-                                    [object_pts[4][0],object_pts[4][1]],
-                                    [object_pts[5][0],object_pts[5][1]],
-                                    [object_pts[6][0],object_pts[6][1]],
-                                    [object_pts[7][0],object_pts[7][1]],
-                                    [object_pts[8][0],object_pts[8][1]],
-                                    [object_pts[9][0],object_pts[9][1]],
-                                    [object_pts[10][0],object_pts[10][1]],
-                                    [object_pts[11][0],object_pts[11][1]],
-                                    [object_pts[12][0],object_pts[12][1]],
-                                    [object_pts[13][0],object_pts[13][1]]])  
-    reproject_obj_pts = reproject_obj_pts * -30
-    image_pts = np.float32([shape[17], shape[21], shape[22], shape[26], shape[36],
-                            shape[39], shape[42], shape[45], shape[31], shape[35],
-                            shape[48], shape[54], shape[57], shape[8]])
-
-    #homography_mat,_ = cv2.findHomography(reproject_obj_pts, image_pts, 0, 3)
-    homography_mat,_ = cv2.findHomography(image_pts, reproject_obj_pts, 0, 3)
-    proj_point = cv2.perspectiveTransform(np.array([shape.astype('float32')]), homography_mat)
-    proj_point = tuple(map(tuple, proj_point.reshape(68, 2)))
-
-    #====================set white image=====================#
-    rows = 1024
-    cols = 1024
-    img = np.zeros((rows, cols, 3), np.uint8)
-    img[:,:,:] = [255,255,255]
-
-    for (xs, ys),(xp, yp) in zip(shape, proj_point):
-        cv2.circle(img, (int(xp) + 320, int(yp) + 240), 3, (0, 0, 0), -1)
-        cv2.circle(img, (xs + 512, ys + 512), 1, (0, 0, 0), -1)
-    
-    cv2.imshow("test", img)
-    #====================end====================#
-    return proj_point
-#====================#               end               #====================#
-
 def main():
     #Save_file
     cols=["left_eyebrow_18x", "left_eyebrow_18y", "left_eyebrow_20x", "left_eyebrow_20y", "left_eyebrow_22x", "left_eyebrow_22y",
@@ -129,7 +87,7 @@ def main():
             for image in files:
                 frame = cv2.imread(image)
                 #------------flip-----------#
-                #frame = cv2.flip(frame, 1)
+                frame = cv2.flip(frame, 1)
 
                 detector = dlib.get_frontal_face_detector()
                 predictor = dlib.shape_predictor(face_landmark_path)
@@ -146,7 +104,10 @@ def main():
                         shape = face_utils.shape_to_np(shape)
 
                         _ , euler_angle, trans_Vec = get_head_pose(shape)
-                        HT_shape = HT_head_pose(frame,shape)
+
+                        #don't use homography transformation
+                        #HT_shape = HT_head_pose(frame,shape)
+                        HT_shape = shape
 
                         for i,(x, y) in enumerate(HT_shape):
                             if i in { 17, 19, 21, 22, 24, 26, 38, 43, 48, 51, 54, 57}:
@@ -170,7 +131,7 @@ def main():
                     print("break")
                     break
                 outfile = image.replace("JPG","CSV")
-                outfile = outfile.replace("3Dface","3dface_v3")
+                outfile = outfile.replace("3Dface","3dface_v3r_nohomo")
                 print(outfile)
                 data_frame.to_csv(outfile)
 
