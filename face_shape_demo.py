@@ -4,6 +4,7 @@ import dlib
 import numpy as np
 from imutils import face_utils
 import pandas as pd
+import glob
 
 face_landmark_path = 'shape_predictor_68_face_landmarks.dat'
 
@@ -107,61 +108,68 @@ def HT_head_pose(frame,shape):
 #====================#               end               #====================#
 
 def main():
-    # return
-    args = sys.argv
-    cap = cv2.VideoCapture(args[1])
-    #cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        print("Unable to connect to camera.")
-        return
-    detector = dlib.get_frontal_face_detector()
-    predictor = dlib.shape_predictor(face_landmark_path)
-
     #Save_file
-    cols=["left_eyebrow_1x", "left_eyebrow_1y", "left_eyebrow_2x", "left_eyebrow_2y", "left_eyebrow_3x", "left_eyebrow_3y",
-          "right_eyebrow_1x", "right_eyebrow_1y", "right_eyebrow_2x", "right_eyebrow_2y", "right_eyebrow_3x", "right_eyebrow_3y",
-          "left_captain_x", "left_captain_y", "right_captain_x", "right_captain_y",
-          "left_lip_x", "left_lip_y", "lip_center_upper_x", "lip_center_upper_y", "right_lip_x", "right_lip_y", "lip_center_lower_x", "lip_center_lower_y",
-          "mouth_upper_x", "mouth_upper_y", "mouth_lower_x", "mouth_lower_y",
-             
+    cols=["left_eyebrow_18x", "left_eyebrow_18y", "left_eyebrow_20x", "left_eyebrow_20y", "left_eyebrow_22x", "left_eyebrow_22y",
+          "right_eyebrow_23x", "right_eyebrow_23y", "right_eyebrow_25x", "right_eyebrow_25y", "right_eyebrow_27x", "right_eyebrow_27y",
+          "left_eye38_x", "left_eye38_y", "right_eye45_x", "right_eye45_y",
+          "left_lip49_x", "left_lip49_y", "lip_center_upper52_x", "lip_center_upper52_y", "right_lip55_x", "right_lip55_y", "lip_center_lower58_x", "lip_center_lower58_y",
+           
           "trans_x", "trans_y", "trans_z",
           "rot_x", "rot_y", "rot_z"] 
-    data_frame = pd.DataFrame(index=[], columns=cols)
 
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if ret:
-            face_rects = detector(frame, 0)
+    path = "/media/mokugyo/ボリューム/3Dface"
+    folder = ["F_Angry","F_Disgust","F_Fear","F_Happy","F_Neutral","F_Surprise","F_Unhappy",
+        "M_Angry","M_Disgust","M_Fear","M_Happy","M_Neutral","M_Surprise","M_Unhappy"]
+    V_S = ["V0S","V2L","V4L"]
 
-            if len(face_rects) > 0:
-                tmp_list = np.array([])
+    for ii in range(0,14):
+        for xx in range(0, 3):
+            files = glob.glob(path + "/" + folder[ii] + "/*"+ V_S[xx] + "*.JPG")
+            for image in files:
+                frame = cv2.imread(image)
+                detector = dlib.get_frontal_face_detector()
+                predictor = dlib.shape_predictor(face_landmark_path)
 
-                shape = predictor(frame, face_rects[0])
-                shape = face_utils.shape_to_np(shape)
+                data_frame = pd.DataFrame(index=[], columns=cols)
 
-                _ , euler_angle, trans_Vec = get_head_pose(shape)
-                HT_shape = HT_head_pose(frame,shape)
+                if frame is not None:
+                    face_rects = detector(frame, 0)
 
-                for i,(x, y) in enumerate(HT_shape):
-                    if i in { 17, 19, 21, 22, 24, 26, 38, 43, 48, 51, 54, 57, 62, 66}:
-                        tmp_list = np.append(tmp_list, [x, y])
-                tmp_list = np.append(tmp_list, [trans_Vec[0]/100, trans_Vec[1]/100, trans_Vec[1]/100])
-                tmp_list = np.append(tmp_list, [euler_angle[0, 0], euler_angle[1, 0], euler_angle[2, 0]])
-                
-                df = pd.Series(tmp_list, index = data_frame.columns)
-                data_frame = data_frame.append(df,ignore_index = True)
-                
-                
-            cv2.imshow("demo", frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-        else:
-            break
-            
-    print("end")
-    cap.release()
-    cv2.destroyAllWindows()
-    data_frame.to_csv(args[2])
+                    if len(face_rects) > 0:
+                        tmp_list = np.array([])
+
+                        shape = predictor(frame, face_rects[0])
+                        shape = face_utils.shape_to_np(shape)
+
+                        _ , euler_angle, trans_Vec = get_head_pose(shape)
+                        HT_shape = HT_head_pose(frame,shape)
+
+                        for i,(x, y) in enumerate(HT_shape):
+                            if i in { 17, 19, 21, 22, 24, 26, 38, 43, 48, 51, 54, 57}:
+                                tmp_list = np.append(tmp_list, [x, y])
+                        tmp_list = np.append(tmp_list, [trans_Vec[0]/100, trans_Vec[1]/100, trans_Vec[1]/100])
+                        tmp_list = np.append(tmp_list, [euler_angle[0, 0], euler_angle[1, 0], euler_angle[2, 0]])
+                        
+                        df = pd.Series(tmp_list, index = data_frame.columns)
+                        data_frame = data_frame.append(df,ignore_index = True)
+                        
+                        
+                    #検出されなかった場合 data_frameに空フレームを追加
+                    else:
+                        tmp_list = np.zeros([30])
+                        tmp_list[:] = np.nan
+                        df = pd.Series(tmp_list, index = data_frame.columns)
+                        data_frame = data_frame.append(df,ignore_index = True)    
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        break
+                else:
+                    print("break")
+                    break
+                outfile = image.replace("JPG","CSV")
+                outfile = outfile.replace("3Dface","3dface_v3")
+                print(outfile)
+                data_frame.to_csv(outfile)
 
 if __name__ == '__main__':
     main()
+    cv2.destroyAllWindows()
