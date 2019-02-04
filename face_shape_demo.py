@@ -117,62 +117,62 @@ def main():
            
           "trans_x", "trans_y", "trans_z",
           "rot_x", "rot_y", "rot_z"] 
-
+    """
     path = "/media/mokugyo/ボリューム/3Dface"
     folder = ["F_Angry","F_Disgust","F_Fear","F_Happy","F_Neutral","F_Surprise","F_Unhappy",
         "M_Angry","M_Disgust","M_Fear","M_Happy","M_Neutral","M_Surprise","M_Unhappy"]
     V_S = ["V0S","V2L","V4L"]
+    """
+    path = "/media/mokugyo/ボリューム/20181227/検証/"
 
-    for ii in range(0,14):
-        for xx in range(0, 3):
-            files = glob.glob(path + "/" + folder[ii] + "/*"+ V_S[xx] + "*.JPG")
-            for image in files:
-                frame = cv2.imread(image)
-                #------------flip-----------#
-                #frame = cv2.flip(frame, 1)
+    files = glob.glob(path + "*.jpg")
+    print(files)
+    for image in files:
+        frame = cv2.imread(image)
+        #------------flip-----------#
+        #frame = cv2.flip(frame, 1)
 
-                detector = dlib.get_frontal_face_detector()
-                predictor = dlib.shape_predictor(face_landmark_path)
+        detector = dlib.get_frontal_face_detector()
+        predictor = dlib.shape_predictor(face_landmark_path)
 
-                data_frame = pd.DataFrame(index=[], columns=cols)
+        data_frame = pd.DataFrame(index=[], columns=cols)
 
-                if frame is not None:
-                    face_rects = detector(frame, 0)
+        if frame is not None:
+            face_rects = detector(frame, 0)
 
-                    if len(face_rects) > 0:
-                        tmp_list = np.array([])
+            if len(face_rects) > 0:
+                tmp_list = np.array([])
 
-                        shape = predictor(frame, face_rects[0])
-                        shape = face_utils.shape_to_np(shape)
+                shape = predictor(frame, face_rects[0])
+                shape = face_utils.shape_to_np(shape)
 
-                        _ , euler_angle, trans_Vec = get_head_pose(shape)
-                        HT_shape = HT_head_pose(frame,shape)
+                _ , euler_angle, trans_Vec = get_head_pose(shape)
+                HT_shape = HT_head_pose(frame,shape)
 
-                        for i,(x, y) in enumerate(HT_shape):
-                            if i in { 17, 19, 21, 22, 24, 26, 38, 43, 48, 51, 54, 57}:
-                                tmp_list = np.append(tmp_list, [x, y])
-                        tmp_list = np.append(tmp_list, [trans_Vec[0]/100, trans_Vec[1]/100, trans_Vec[1]/100])
-                        tmp_list = np.append(tmp_list, [euler_angle[0, 0], euler_angle[1, 0], euler_angle[2, 0]])
-                        
-                        df = pd.Series(tmp_list, index = data_frame.columns)
-                        data_frame = data_frame.append(df,ignore_index = True)
-                        
-                        
-                    #検出されなかった場合 data_frameに空フレームを追加
-                    else:
-                        tmp_list = np.zeros([30])
-                        tmp_list[:] = np.nan
-                        df = pd.Series(tmp_list, index = data_frame.columns)
-                        data_frame = data_frame.append(df,ignore_index = True)    
-                    if cv2.waitKey(1) & 0xFF == ord('q'):
-                        break
-                else:
-                    print("break")
-                    break
-                outfile = image.replace("JPG","CSV")
-                outfile = outfile.replace("3Dface","3dface_v3")
-                print(outfile)
-                data_frame.to_csv(outfile)
+                for i,(x, y) in enumerate(HT_shape):
+                    if i in { 17, 19, 21, 22, 24, 26, 38, 43, 48, 51, 54, 57}:
+                        tmp_list = np.append(tmp_list, [x, y])
+                tmp_list = np.append(tmp_list, [trans_Vec[0]/100, trans_Vec[1]/100, trans_Vec[1]/100])
+                tmp_list = np.append(tmp_list, [euler_angle[0, 0], euler_angle[1, 0], euler_angle[2, 0]])
+                
+                df = pd.Series(tmp_list, index = data_frame.columns)
+                data_frame = data_frame.append(df,ignore_index = True)
+                
+                
+            #検出されなかった場合 data_frameに空フレームを追加
+            else:
+                tmp_list = np.zeros([30])
+                tmp_list[:] = np.nan
+                df = pd.Series(tmp_list, index = data_frame.columns)
+                data_frame = data_frame.append(df,ignore_index = True)    
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        else:
+            print("break")
+            break
+        outfile = image.replace("jpg","csv")
+        print(outfile)
+        data_frame.to_csv(outfile)
 
 if __name__ == '__main__':
     main()
