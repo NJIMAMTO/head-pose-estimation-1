@@ -6,20 +6,23 @@ import dlib
 import numpy as np
 from imutils import face_utils
 import pandas as pd
+import glob
 
 face_landmark_path = 'shape_predictor_68_face_landmarks.dat'
-"""
+
 #Webcam
-K = [6.5308391993466671e+002, 0.0, 320,
-     0.0, 6.5308391993466671e+002, 240,
+K = [6.5308391993466671e+002, 0.0, 640,
+     0.0, 6.5308391993466671e+002, 360,
      0.0, 0.0, 1.0]
 D = [7.0834633684407095e-002, 6.9140193737175351e-002, 0.0, 0.0, -1.3073460323689292e+000]
+
 """
 #3Dface
 K = [3888.0, 0.0, 600,
      0.0, 3888.0, 600,
      0.0, 0.0, 1.0]
 D = [0, 0, 0.0, 0.0, 0]
+"""
 
 cam_matrix = np.array(K).reshape(3, 3).astype(np.float32)
 dist_coeffs = np.array(D).reshape(5, 1).astype(np.float32)
@@ -99,7 +102,7 @@ class Head_Pose:
         homography_mat,_ = cv2.findHomography(self.image_pts, reproject_obj_pts, 0, 3)
         proj_point = cv2.perspectiveTransform(np.array([self.shape.astype('float32')]), homography_mat)
         proj_point = tuple(map(tuple, proj_point.reshape(68, 2)))
-
+        """
         #====================set white image=====================#
         rows = 1200
         cols = 1200
@@ -112,6 +115,7 @@ class Head_Pose:
         
         cv2.imshow("test", img)
         #====================end====================#
+        """
         return proj_point
     #====================#               end               #====================#
 
@@ -122,99 +126,83 @@ def main():
     #cap = cv2.VideoCapture(0)
     """
 
-    path = "/media/mokugyo/ボリューム/3Dface"
+    path = "/media/mokugyo/ボリューム/20181227/output"
+    """
     folder = ["F_Angry","F_Disgust","F_Fear","F_Happy","F_Neutral","F_Surprise","F_Unhappy",
         "M_Angry","M_Disgust","M_Fear","M_Happy","M_Neutral","M_Surprise","M_Unhappy"]
     V_S = ["V0S","V2L","V4L","V0S_r","V2L_r","V4L_r"]
+    
+    """
+    file_path = glob.glob(path + "/*.mp4")
+    for ii in range(0, len(file_path)):
+        print('load:'+ file_path[ii])
+        f_p = file_path[ii]
+        cap = cv2.VideoCapture(f_p)
 
-    for ii in range(0,14):
-        for xx in range(0, 6):
-            file_path = path + "/" + folder[ii] + "/" + V_S[xx]
-            print(file_path)
-            cap = cv2.VideoCapture(file_path + '.mp4')
+        if not cap.isOpened():
+            print("Unable to connect to camera.")
+            return
+        detector = dlib.get_frontal_face_detector()
+        predictor = dlib.shape_predictor(face_landmark_path)
 
-            if not cap.isOpened():
-                print("Unable to connect to camera.")
-                return
-            detector = dlib.get_frontal_face_detector()
-            predictor = dlib.shape_predictor(face_landmark_path)
+        #Save_file (feature points -> https://cloud.githubusercontent.com/assets/16308037/24229391/1910e9cc-0fb4-11e7-987b-0fecce2c829e.JPG)
+        cols=["left_eyebrow_18x", "left_eyebrow_18y", "left_eyebrow_20x", "left_eyebrow_20y", "left_eyebrow_22x", "left_eyebrow_22y",
+          "right_eyebrow_23x", "right_eyebrow_23y", "right_eyebrow_25x", "right_eyebrow_25y", "right_eyebrow_27x", "right_eyebrow_27y",
+          "left_eye38_x", "left_eye38_y", "right_eye45_x", "right_eye45_y",
+          "left_lip49_x", "left_lip49_y", "lip_center_upper52_x", "lip_center_upper52_y", "right_lip55_x", "right_lip55_y", "lip_center_lower58_x", "lip_center_lower58_y",
+           
+          "trans_x", "trans_y", "trans_z",
+          "rot_x", "rot_y", "rot_z"] 
+        data_frame = pd.DataFrame(index=[], columns=cols)
 
-            #Save_file (feature points -> https://cloud.githubusercontent.com/assets/16308037/24229391/1910e9cc-0fb4-11e7-987b-0fecce2c829e.JPG)
-            cols = ["class","18-37","20-37","22-37",
-                    "23-46","25-46","27-46",
-                    "38-42","45-47",
-                    "49-34","52-34","55-34","58-34",
-                    "trans_x", "trans_y", "trans_z",
-                    "rot_x", "rot_y", "rot_z"] 
-            data_frame = pd.DataFrame(index=[], columns=cols)
+        while cap.isOpened():
+            ret, im = cap.read()
+            if ret:
+                frame = im
+                ########################
+                #frame = im[960:1980,0:540]
+                #frame = im[540:1080,0:960]
+                ########################
+                face_rects = detector(frame, 0)
+                tmp_list = []
 
-            while cap.isOpened():
-                ret, im = cap.read()
-                if ret:
-                    frame = im
-                    ########################
-                    #frame = im[960:1980,0:540]
-                    #frame = im[540:1080,0:960]
-                    ########################
-                    face_rects = detector(frame, 0)
-                    tmp_list = np.array(int(ii%7))
+                #顔が検出されたら実行
+                if len(face_rects) > 0:
+                    shape = predictor(frame, face_rects[0])
+                    shape = face_utils.shape_to_np(shape)
 
-                    #顔が検出されたら実行
-                    if len(face_rects) > 0:
-                        shape = predictor(frame, face_rects[0])
-                        shape = face_utils.shape_to_np(shape)
+                    HP = Head_Pose(shape)
+                    _ , euler_angle, trans_Vec = HP.get()
+                    HT_shape = HP.Homography_Trans(frame)
 
-                        HP = Head_Pose(shape)
-                        _ , euler_angle, trans_Vec = HP.get()
-                        HT_shape = HP.Homography_Trans(frame)
-
-                        Reference_point = np.float32([HT_shape[36], HT_shape[41], HT_shape[45], HT_shape[46], HT_shape[33]])
-                        for i in range(68):
-                            #left_eyebrow
-                            if i in { 17, 19, 21}:
-                                norm = np.linalg.norm(HT_shape[i] - Reference_point[0], ord=2)
-                                tmp_list = np.append(tmp_list, norm)
-                            #left_eye
-                            elif i == 37:
-                                norm = np.linalg.norm(HT_shape[i] - Reference_point[1], ord=2)
-                                tmp_list = np.append(tmp_list, norm)
-                            #right_eyebrow
-                            elif i in {22, 24, 26}:
-                                norm = np.linalg.norm(HT_shape[i] - Reference_point[2], ord=2)
-                                tmp_list = np.append(tmp_list, norm)
-                            #right_eye
-                            elif i == 44:
-                                norm = np.linalg.norm(HT_shape[i] - Reference_point[3], ord=2)
-                                tmp_list = np.append(tmp_list, norm)
-                            #mouth
-                            elif i in {48, 51, 54, 57}:
-                                norm = np.linalg.norm(HT_shape[i] - Reference_point[4], ord=2)
-                                tmp_list = np.append(tmp_list, norm)
-
-                        tmp_list = np.append(tmp_list, [trans_Vec[0]/100, trans_Vec[1]/100, trans_Vec[1]/100])
-                        tmp_list = np.append(tmp_list, [euler_angle[0, 0], euler_angle[1, 0], euler_angle[2, 0]])
-                                
-                        df = pd.Series(tmp_list, index = data_frame.columns)
-                        data_frame = data_frame.append(df,ignore_index = True) 
-
-                    #検出されなかった場合 data_frameに空フレームを追加
-                    else:
-                        tmp_list = np.zeros([19])
-                        tmp_list[:] = np.nan
-                        df = pd.Series(tmp_list, index = data_frame.columns)
-                        data_frame = data_frame.append(df,ignore_index = True)    
-
-                    cv2.imshow("demo", frame)
-                    if cv2.waitKey(1) & 0xFF == ord('q'):
-                        break
-                else:
-                    break
+                    for i,(x, y) in enumerate(HT_shape):
+                        if i in { 17, 19, 21, 22, 24, 26, 38, 43, 48, 51, 54, 57}:
+                            tmp_list = np.append(tmp_list, [x, y])
+                    tmp_list = np.append(tmp_list, [trans_Vec[0]/100, trans_Vec[1]/100, trans_Vec[1]/100])
+                    tmp_list = np.append(tmp_list, [euler_angle[0, 0], euler_angle[1, 0], euler_angle[2, 0]])
                             
-            print("end")
-            cap.release()
-            
-            #data_frame.to_csv(args[2])
-            data_frame.to_csv(file_path + '.csv')
+                    df = pd.Series(tmp_list, index = data_frame.columns)
+                    data_frame = data_frame.append(df,ignore_index = True) 
+
+                #検出されなかった場合 data_frameに空フレームを追加
+                else:
+                    tmp_list = np.zeros([30])
+                    tmp_list[:] = np.nan
+                    df = pd.Series(tmp_list, index = data_frame.columns)
+                    data_frame = data_frame.append(df,ignore_index = True)    
+
+                #cv2.imshow("demo", frame)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+            else:
+                break
+                        
+        print("end")
+        cap.release()
+        
+        #data_frame.to_csv(args[2])
+        file_path[ii].replace('.mp4','.csv')
+        data_frame.to_csv(file_path[ii] + '.csv')
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':

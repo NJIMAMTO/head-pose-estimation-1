@@ -117,13 +117,11 @@ def main():
            
           "trans_x", "trans_y", "trans_z",
           "rot_x", "rot_y", "rot_z"] 
-    """
+
     path = "/media/mokugyo/ボリューム/3Dface"
     folder = ["F_Angry","F_Disgust","F_Fear","F_Happy","F_Neutral","F_Surprise","F_Unhappy",
         "M_Angry","M_Disgust","M_Fear","M_Happy","M_Neutral","M_Surprise","M_Unhappy"]
     V_S = ["V0S","V2L","V4L"]
-    """
-    path = "/media/mokugyo/ボリューム/20181227/検証/"
 
     files = glob.glob(path + "*.jpg")
     print(files)
@@ -171,6 +169,7 @@ def main():
             print("break")
             break
         outfile = image.replace("jpg","csv")
+        #outfile = outfile.replace("3dface","3dface_v?")
         print(outfile)
         data_frame.to_csv(outfile)
 
