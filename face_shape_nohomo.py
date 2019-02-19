@@ -6,11 +6,14 @@ from imutils import face_utils
 import pandas as pd
 import glob
 
+import re
+import pprint
+
 face_landmark_path = 'shape_predictor_68_face_landmarks.dat'
 
 #!!!!!!!!!!!!1画像に合わせた適切な設定を!!!!!!!!!!!!!!!#
-K = [3888.0, 0.0, 600,
-     0.0, 3888.0, 600,
+K = [600.0, 0.0, 320,
+     0.0, 600.0, 245,
      0.0, 0.0, 1.0]
 D = [7.0834633684407095e-002, 6.9140193737175351e-002, 0.0, 0.0, -1.3073460323689292e+000]
 
@@ -75,65 +78,65 @@ def main():
            
           "trans_x", "trans_y", "trans_z",
           "rot_x", "rot_y", "rot_z"] 
-
+    """
     path = "/media/mokugyo/ボリューム/3Dface"
     folder = ["F_Angry","F_Disgust","F_Fear","F_Happy","F_Neutral","F_Surprise","F_Unhappy",
         "M_Angry","M_Disgust","M_Fear","M_Happy","M_Neutral","M_Surprise","M_Unhappy"]
     V_S = ["V0S","V2L","V4L"]
+    """
+    files = sorted(glob.glob("/home/mokugyo/ダウンロード/cohn-kanade-images/*/**/*" + "*.png"))
 
-    for ii in range(0,14):
-        for xx in range(0, 3):
-            files = glob.glob(path + "/" + folder[ii] + "/*"+ V_S[xx] + "*.JPG")
-            for image in files:
-                frame = cv2.imread(image)
-                #------------flip-----------#
-                frame = cv2.flip(frame, 1)
+    for image in files:
+        frame = cv2.imread(image)
+        #------------flip-----------#
+        #frame = cv2.flip(frame, 1)
 
-                detector = dlib.get_frontal_face_detector()
-                predictor = dlib.shape_predictor(face_landmark_path)
+        detector = dlib.get_frontal_face_detector()
+        predictor = dlib.shape_predictor(face_landmark_path)
 
-                data_frame = pd.DataFrame(index=[], columns=cols)
+        data_frame = pd.DataFrame(index=[], columns=cols)
 
-                if frame is not None:
-                    face_rects = detector(frame, 0)
+        if frame is not None:
+            face_rects = detector(frame, 0)
 
-                    if len(face_rects) > 0:
-                        tmp_list = np.array([])
+            if len(face_rects) > 0:
+                tmp_list = np.array([])
 
-                        shape = predictor(frame, face_rects[0])
-                        shape = face_utils.shape_to_np(shape)
+                shape = predictor(frame, face_rects[0])
+                shape = face_utils.shape_to_np(shape)
 
-                        _ , euler_angle, trans_Vec = get_head_pose(shape)
+                _ , euler_angle, trans_Vec = get_head_pose(shape)
 
-                        #don't use homography transformation
-                        #HT_shape = HT_head_pose(frame,shape)
-                        HT_shape = shape
+                #don't use homography transformation
+                #HT_shape = HT_head_pose(frame,shape)
+                HT_shape = shape
 
-                        for i,(x, y) in enumerate(HT_shape):
-                            if i in { 17, 19, 21, 22, 24, 26, 38, 43, 48, 51, 54, 57}:
-                                tmp_list = np.append(tmp_list, [x, y])
-                        tmp_list = np.append(tmp_list, [trans_Vec[0]/100, trans_Vec[1]/100, trans_Vec[1]/100])
-                        tmp_list = np.append(tmp_list, [euler_angle[0, 0], euler_angle[1, 0], euler_angle[2, 0]])
-                        
-                        df = pd.Series(tmp_list, index = data_frame.columns)
-                        data_frame = data_frame.append(df,ignore_index = True)
-                        
-                        
-                    #検出されなかった場合 data_frameに空フレームを追加
-                    else:
-                        tmp_list = np.zeros([30])
-                        tmp_list[:] = np.nan
-                        df = pd.Series(tmp_list, index = data_frame.columns)
-                        data_frame = data_frame.append(df,ignore_index = True)    
-                    if cv2.waitKey(1) & 0xFF == ord('q'):
-                        break
-                else:
-                    print("break")
-                    break
-                outfile = image.replace("JPG","CSV")
-                outfile = outfile.replace("3Dface","3dface_v3r_nohomo")
-                print(outfile)
-                data_frame.to_csv(outfile)
+                for i,(x, y) in enumerate(HT_shape):
+                    if i in { 17, 19, 21, 22, 24, 26, 38, 43, 48, 51, 54, 57}:
+                        tmp_list = np.append(tmp_list, [x, y])
+                tmp_list = np.append(tmp_list, [trans_Vec[0]/100, trans_Vec[1]/100, trans_Vec[1]/100])
+                tmp_list = np.append(tmp_list, [euler_angle[0, 0], euler_angle[1, 0], euler_angle[2, 0]])
+                
+                df = pd.Series(tmp_list, index = data_frame.columns)
+                data_frame = data_frame.append(df,ignore_index = True)
+                
+                
+            #検出されなかった場合 data_frameに空フレームを追加
+            else:
+                tmp_list = np.zeros([30])
+                tmp_list[:] = np.nan
+                df = pd.Series(tmp_list, index = data_frame.columns)
+                data_frame = data_frame.append(df,ignore_index = True)    
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        else:
+            print("break")
+            break
+
+        outfile = re.sub('.png',"_nohomo.csv",image)
+
+        print(outfile)
+        data_frame.to_csv(outfile)
 
 if __name__ == '__main__':
     main()

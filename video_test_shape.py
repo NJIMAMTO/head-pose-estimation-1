@@ -3,6 +3,8 @@ import cv2
 import dlib
 import numpy as np
 from imutils import face_utils
+import glob
+import pprint
 
 face_landmark_path = './shape_predictor_68_face_landmarks.dat'
 
@@ -15,8 +17,8 @@ D = [7.0834633684407095e-002, 6.9140193737175351e-002, 0.0, 0.0, -1.307346032368
 
 """
 #3Dface
-K = [3888.0, 0.0, 600,
-     0.0, 3888.0, 600,
+K = [600.0, 0.0, 320,
+     0.0, 600.0, 245,
      0.0, 0.0, 1.0]
 D = [0, 0, 0.0, 0.0, 0]
 
@@ -76,15 +78,17 @@ def main():
     # return
     args = sys.argv
     cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        print("Unable to connect to camera.")
-        return
-    detector = dlib.get_frontal_face_detector()
-    predictor = dlib.shape_predictor(face_landmark_path)
+    files = sorted(glob.glob("/home/mokugyo/ダウンロード/cohn-kanade-images/*/**/*" + "*.png"))
+    pprint.pprint(files)
+    for image in files:
+        frame = cv2.imread(image)
 
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if ret:
+        detector = dlib.get_frontal_face_detector()
+        predictor = dlib.shape_predictor(face_landmark_path)
+
+        if frame is not None:
+        #while cap.isOpened():
+            #ret, frame = cap.read()
             face_rects = detector(frame, 0)
 
             if len(face_rects) > 0:
@@ -100,26 +104,26 @@ def main():
                     cv2.line(frame, reprojectdst[start], reprojectdst[end], (0, 0, 255))
 
 
-
+                color = (0, 0, 0)
                 cv2.putText(frame, "   =angles= =Trans=", 
                             (20, 20), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (255, 255, 255), thickness=2)
+                            0.75, color, thickness=2)
 
                 cv2.putText(frame, "X: " + "{:7.2f}".format(euler_angle[0, 0]), (20, 50), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (255, 255, 255), thickness=2)
+                            0.75, color, thickness=2)
                 cv2.putText(frame, "Y: " + "{:7.2f}".format(euler_angle[1, 0]), (20, 80), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (255, 255, 255), thickness=2)
+                            0.75, color, thickness=2)
                 cv2.putText(frame, "Z: " + "{:7.2f}".format(euler_angle[2, 0]), (20, 110), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (255, 255, 255), thickness=2)
+                            0.75, color, thickness=2)
                 
                 #print(tuple(translation_vec))h
 
                 cv2.putText(frame, "{:7.2f}".format(translation_vec[0, 0]), (160, 50), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (255, 255, 255), thickness=2)
+                            0.75, color, thickness=2)
                 cv2.putText(frame, "{:7.2f}".format(translation_vec[1, 0]), (160, 80), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (255, 255, 255), thickness=2)
+                            0.75, color, thickness=2)
                 cv2.putText(frame, "{:7.2f}".format(translation_vec[2, 0]), (160, 110), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.75, (255, 255, 255), thickness=2)
+                            0.75, color, thickness=2)
                 
                 
 

@@ -6,11 +6,14 @@ from imutils import face_utils
 import pandas as pd
 import glob
 
+import re
+import pprint
+
 face_landmark_path = 'shape_predictor_68_face_landmarks.dat'
 
 #!!!!!!!!!!!!1画像に合わせた適切な設定を!!!!!!!!!!!!!!!#
-K = [3888.0, 0.0, 600,
-     0.0, 3888.0, 600,
+K = [600.0, 0.0, 320,
+     0.0, 600.0, 245,
      0.0, 0.0, 1.0]
 D = [7.0834633684407095e-002, 6.9140193737175351e-002, 0.0, 0.0, -1.3073460323689292e+000]
 
@@ -117,14 +120,14 @@ def main():
            
           "trans_x", "trans_y", "trans_z",
           "rot_x", "rot_y", "rot_z"] 
-
+    """
     path = "/media/mokugyo/ボリューム/3Dface"
     folder = ["F_Angry","F_Disgust","F_Fear","F_Happy","F_Neutral","F_Surprise","F_Unhappy",
         "M_Angry","M_Disgust","M_Fear","M_Happy","M_Neutral","M_Surprise","M_Unhappy"]
     V_S = ["V0S","V2L","V4L"]
-
-    files = glob.glob(path + "*.jpg")
-    print(files)
+    """
+    files = sorted(glob.glob("/home/mokugyo/ダウンロード/cohn-kanade-images/*/**/*" + "*.png"))
+    pprint.pprint(files)
     for image in files:
         frame = cv2.imread(image)
         #------------flip-----------#
@@ -144,8 +147,16 @@ def main():
                 shape = predictor(frame, face_rects[0])
                 shape = face_utils.shape_to_np(shape)
 
-                _ , euler_angle, trans_Vec = get_head_pose(shape)
+                reprojectdst, euler_angle, trans_Vec = get_head_pose(shape)
                 HT_shape = HT_head_pose(frame,shape)
+
+                
+                for (x, y) in shape:
+                    cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
+
+                for start, end in line_pairs:
+                    cv2.line(frame, reprojectdst[start], reprojectdst[end], (0, 0, 255))
+
 
                 for i,(x, y) in enumerate(HT_shape):
                     if i in { 17, 19, 21, 22, 24, 26, 38, 43, 48, 51, 54, 57}:
@@ -168,8 +179,11 @@ def main():
         else:
             print("break")
             break
-        outfile = image.replace("jpg","csv")
-        #outfile = outfile.replace("3dface","3dface_v?")
+
+        cv2.imshow("demo", frame)
+
+        outfile = re.sub('png',"csv",image)
+
         print(outfile)
         data_frame.to_csv(outfile)
 
