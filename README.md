@@ -1,4 +1,14 @@
 # head-pose-estimation
+==========================
+
+表情・頭部姿勢変化を使った感情認識プログラムの流れ：**顔画像・映像入力->特徴点検出->前処理**->機械学習
+
+#### 研究室メンバーへ
+ここでは映像入力から前処理までを実装しています。
+これは以下で説明されているものを改造したものです（主にCSVへの出力部分を追加）．
+
+>forked from https://github.com/lincolnhard/head-pose-estimation
+
 Real-time head pose estimation built with OpenCV and dlib 
 
 <b>2D:</b><br>Using dlib for facial features tracking, modified from http://dlib.net/webcam_face_pose_ex.cpp.html
